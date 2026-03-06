@@ -115,7 +115,7 @@ async def upload_image(
         shutil.copyfileobj(file.file, buffer)
 
     # Build URL
-    image_url = f"https://http://192.168.1.14:8000/uploads/{filename}"
+    image_url = f"https://pinit-backend-1.onrender.com/uploads/{filename}"
 
     # Save in SQL database with timestamp
     new_image = database_model.UserImage(
