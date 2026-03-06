@@ -132,6 +132,50 @@ async def upload_image(
         "image_url": image_url,
         "created_at": new_image.created_at
     }
+@app.delete("/delete-image")
+def delete_image(image_url: str = Form(...), db: Session = Depends(get_db)):
+    image = db.query(database_model.UserImage).filter(
+        database_model.UserImage.image_url == image_url
+    ).first()
+
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # delete file from uploads folder
+    filename = image_url.split("/uploads/")[-1]
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.delete(image)
+    db.commit()
+
+    return {"message": "Image deleted successfully"}
+
+@app.delete("/delete-user/{unique_id}")
+def delete_user(unique_id: str, db: Session = Depends(get_db)):
+
+    images = db.query(database_model.UserImage).filter(
+        database_model.UserImage.unique_id == unique_id
+    ).all()
+
+    if not images:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    for img in images:
+        if img.image_url:
+            filename = img.image_url.split("/uploads/")[-1]
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        db.delete(img)
+
+    db.commit()
+
+    return {"message": f"User {unique_id} and all images deleted"}
 
 # -------------------- FAVICON --------------------
 @app.get("/favicon.ico")
