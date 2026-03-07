@@ -99,48 +99,12 @@ def login(unique_id: str = Form(...), db: Session = Depends(get_db)):
         "unique_id": unique_id,
         "images": [{"image_url": img.image_url, "created_at": img.created_at} for img in images]
     }
-
-# @app.post("/upload-image/")
-# async def upload_image(
-#     file: UploadFile = File(...),
-#     unique_id: str = Form(...),
-#     db: Session = Depends(get_db)
-# ):
-#     # Check if user exists
-#     user_exists = db.query(database_model.UserImage).filter(
-#         database_model.UserImage.unique_id == unique_id
-#     ).first()
-#     if not user_exists:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     # Save file locally
-#     filename = f"{unique_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
-#     file_path = os.path.join(UPLOAD_FOLDER, filename)
-#     with open(file_path, "wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
-
-#     # Build URL
-#     image_url = f"https://pinit-backend-1.onrender.com/uploads/{filename}"
-
-#     # Save in SQL database with timestamp
-#     new_image = database_model.UserImage(
-#         unique_id=unique_id,
-#         image_url=image_url,
-#         created_at=datetime.utcnow()
-#     )
-#     db.add(new_image)
-#     db.commit()
-#     db.refresh(new_image)
-
-#     return {
-#         "message": "Image uploaded successfully",
-#         "image_url": image_url,
-#         "created_at": new_image.created_at
-#     }
 @app.post("/upload-image/")
 async def upload_image(
     file: UploadFile = File(...),
     unique_id: str = Form(...),
+    device_id: str = Form(...),
+    device_model: str = Form(...),
     db: Session = Depends(get_db)
 ):
 
@@ -163,6 +127,8 @@ async def upload_image(
     new_image = database_model.UserImage(
         unique_id=unique_id,
         image_url=image_url,
+        device_id=device_id,
+        device_model=device_model,
         created_at=datetime.utcnow()
     )
 
@@ -171,10 +137,50 @@ async def upload_image(
     db.refresh(new_image)
 
     return {
-        "message": "Image uploaded successfully",
         "image_url": image_url,
+        "device_id": device_id,
+        "device_model": device_model,
         "created_at": new_image.created_at
     }
+
+# @app.post("/upload-image/")
+# async def upload_image(
+#     file: UploadFile = File(...),
+#     unique_id: str = Form(...),
+#     db: Session = Depends(get_db)
+# ):
+
+#     user_exists = db.query(database_model.UserImage).filter(
+#         database_model.UserImage.unique_id == unique_id
+#     ).first()
+
+#     if not user_exists:
+#         raise HTTPException(status_code=404, detail="User not found")
+
+#     filename = f"{unique_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
+
+#     file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+#     with open(file_path, "wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+
+#     image_url = f"https://pinit-backend-1.onrender.com/uploads/{filename}"
+
+#     new_image = database_model.UserImage(
+#         unique_id=unique_id,
+#         image_url=image_url,
+#         created_at=datetime.utcnow()
+#     )
+
+#     db.add(new_image)
+#     db.commit()
+#     db.refresh(new_image)
+
+#     return {
+#         "message": "Image uploaded successfully",
+#         "image_url": image_url,
+#         "created_at": new_image.created_at
+#     }
 @app.delete("/delete-image")
 def delete_image(image_url: str = Form(...), db: Session = Depends(get_db)):
     image = db.query(database_model.UserImage).filter(
