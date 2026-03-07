@@ -14,11 +14,16 @@ app = FastAPI()
 
 database_model.Base.metadata.create_all(bind=engine)
 
-UPLOAD_FOLDER = "uploads"
+# UPLOAD_FOLDER = "uploads"
+# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 from fastapi.staticfiles import StaticFiles
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
 
 def get_db():
     db = session()
@@ -147,13 +152,13 @@ async def upload_image(
         raise HTTPException(status_code=404, detail="User not found")
 
     filename = f"{unique_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
+
     file_path = os.path.join(UPLOAD_FOLDER, filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # store relative path
-    image_url = f"/uploads/{filename}"
+    image_url = f"https://pinit-backend-1.onrender.com/uploads/{filename}"
 
     new_image = database_model.UserImage(
         unique_id=unique_id,
