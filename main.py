@@ -72,14 +72,27 @@ def get_images(unique_id: str, db: Session = Depends(get_db)):
         database_model.UserImage.image_url.isnot(None)
     ).all()
 
+    # return {
+    #     "unique_id": unique_id,
+    #     "total_images": len(images),
+    #     "images": [
+    #         {"image_url": img.image_url, "created_at": img.created_at}
+    #         for img in images
+    #     ]
+    # }
     return {
-        "unique_id": unique_id,
-        "total_images": len(images),
-        "images": [
-            {"image_url": img.image_url, "created_at": img.created_at}
-            for img in images
-        ]
-    }
+    "unique_id": unique_id,
+    "total_images": len(images),
+    "images": [
+        {
+            "image_url": img.image_url,
+            "created_at": img.created_at,
+            "device_id": img.device_id,
+            "device_model": img.device_model
+        }
+        for img in images
+    ]
+}
 
 @app.post("/login")
 def login(unique_id: str = Form(...), db: Session = Depends(get_db)):
