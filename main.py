@@ -9,6 +9,7 @@ from datetime import datetime
 
 from database import session, engine
 import database_model
+from models import LoginRequest
 
 app = FastAPI()
 
@@ -38,7 +39,9 @@ def generate_unique_id(length=8):
 
 @app.get("/")
 def root():
-    return {"message": "API is running"}
+    return {"message": "API was running"}
+
+
 
 @app.post("/register")
 def register_user(db: Session = Depends(get_db)):
@@ -156,44 +159,6 @@ async def upload_image(
         "created_at": new_image.created_at
     }
 
-# @app.post("/upload-image/")
-# async def upload_image(
-#     file: UploadFile = File(...),
-#     unique_id: str = Form(...),
-#     db: Session = Depends(get_db)
-# ):
-
-#     user_exists = db.query(database_model.UserImage).filter(
-#         database_model.UserImage.unique_id == unique_id
-#     ).first()
-
-#     if not user_exists:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     filename = f"{unique_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
-
-#     file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-#     with open(file_path, "wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
-
-#     image_url = f"https://pinit-backend-1.onrender.com/uploads/{filename}"
-
-#     new_image = database_model.UserImage(
-#         unique_id=unique_id,
-#         image_url=image_url,
-#         created_at=datetime.utcnow()
-#     )
-
-#     db.add(new_image)
-#     db.commit()
-#     db.refresh(new_image)
-
-#     return {
-#         "message": "Image uploaded successfully",
-#         "image_url": image_url,
-#         "created_at": new_image.created_at
-#     }
 @app.delete("/delete-image")
 def delete_image(image_url: str = Form(...), db: Session = Depends(get_db)):
     image = db.query(database_model.UserImage).filter(
@@ -243,3 +208,33 @@ def delete_user(unique_id: str, db: Session = Depends(get_db)):
 @app.get("/favicon.ico")
 def favicon():
     return {"message": "No favicon"}
+
+@app.post("/web-login")
+def web_login(data: LoginRequest, db: Session = Depends(get_db)):
+
+    unique_id = data.unique_id
+
+    user = db.query(database_model.UserImage).filter(
+        database_model.UserImage.unique_id == unique_id
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    images = db.query(database_model.UserImage).filter(
+        database_model.UserImage.unique_id == unique_id,
+        database_model.UserImage.image_url.isnot(None)
+    ).all()
+
+    return {
+        "unique_id": unique_id,
+        "images": [
+            {
+                "image_url": img.image_url,
+                "created_at": img.created_at,
+                "device_id": img.device_id,
+                "device_model": img.device_model
+            }
+            for img in images
+        ]
+    }

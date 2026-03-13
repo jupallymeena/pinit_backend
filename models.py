@@ -4,3 +4,5 @@ from sqlalchemy import LargeBinary
 
 class User(BaseModel):
     unique_id:str
+class LoginRequest(BaseModel):
+    unique_id: str
