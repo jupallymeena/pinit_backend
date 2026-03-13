@@ -1,5 +1,19 @@
 
+# from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException
+# from sqlalchemy.orm import Session
+# import random
+# import string
+# import shutil
+# import os
+# from datetime import datetime
+
+# from database import session, engine
+# import database_model
+# from models import LoginRequest
+
+# app = FastAPI()
 from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import random
 import string
@@ -12,6 +26,14 @@ import database_model
 from models import LoginRequest
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 database_model.Base.metadata.create_all(bind=engine)
 
